@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compression Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Image Compression Tool</h1>
+            <p>Compress your images quickly while retaining quality</p>
+        </header>
+
+        <!-- Form Section -->
+        <main class="form-section">
+            <div class="form-group">
+                <label for="fileType">Select File Type:</label>
+                <select id="fileType">
+                    <option value="jpeg">JPEG</option>
+                    <option value="png">PNG</option>
+                    <option value="gif">GIF</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="imageUpload">Upload Image:</label>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="maxFileSize">Max File Size (KB):</label>
+                <input type="range" id="maxFileSize" min="10" max="1000" value="500">
+                <span id="fileSizeDisplay">500 KB</span>
+            </div>
+
+            <div class="form-group">
+                <label for="quality">Quality (%):</label>
+                <input type="range" id="quality" min="10" max="100" value="80">
+                <span id="qualityDisplay">80%</span>
+            </div>
+
+            <button id="compressButton">Compress Image</button>
+
+            <!-- Progress Bar -->
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <!-- Download Link -->
+            <div class="download-link" id="downloadLink">
+                <a id="downloadAnchor" href="#" download>Download Compressed Image</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Dynamically update range slider values
+        const fileSizeDisplay = document.getElementById('fileSizeDisplay');
+        const qualityDisplay = document.getElementById('qualityDisplay');
+
+        document.getElementById('maxFileSize').addEventListener('input', function () {
+            fileSizeDisplay.textContent = `${this.value} KB`;
+        });
+
+        document.getElementById('quality').addEventListener('input', function () {
+            qualityDisplay.textContent = `${this.value}%`;
+        });
+
+        document.getElementById('compressButton').addEventListener('click', async function () {
+            const fileType = document.getElementById('fileType').value;
+            const fileInput = document.getElementById('imageUpload');
+            const maxFileSize = document.getElementById('maxFileSize').value;
+            const quality = document.getElementById('quality').value;
+            const progressBar = document.getElementById('progressBar');
+            const downloadLink = document.getElementById('downloadLink');
+            const downloadAnchor = document.getElementById('downloadAnchor');
+
+            progressBar.style.width = '0%';
+            downloadLink.style.display = 'none';
+
+            if (!fileInput.files[0]) {
+                alert("Please upload an image!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('fileType', fileType);
+            formData.append('maxFileSize', maxFileSize);
+            formData.append('quality', quality);
+
+            try {
+                progressBar.style.width = '50%';
+
+                const response = await fetch('/compress', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                progressBar.style.width = '100%';
+                downloadLink.style.display = 'block';
+                downloadAnchor.href = url;
+                downloadAnchor.download = 'compressed_image.' + fileType;
+            } catch (error) {
+                alert("Error compressing the image: " + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
